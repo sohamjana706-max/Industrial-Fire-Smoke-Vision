@@ -1,0 +1,8 @@
+venv/
+dataset/
+dataset_yolo/
+runs/
+*.pt
+*.zip
+__pycache__/
+.DS_Store
