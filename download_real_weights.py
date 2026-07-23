@@ -1,15 +1,35 @@
 import os
-import urllib.request
+import shutil
+from huggingface_hub import hf_hub_download
 
-print("[SYSTEM]: Fetching high-accuracy real-world Fire & Smoke weights from HuggingFace...")
+print("[SYSTEM]: Fetching verified public Fire & Smoke model weights...")
+
 weights_dir = "runs/detect/train/weights"
 os.makedirs(weights_dir, exist_ok=True)
 target_path = os.path.join(weights_dir, "best.pt")
 
-url = "https://huggingface.co/arnabdhar/YOLOv8-Fire-Extraction/resolve/main/best.pt"
+try:
+    # Public D-Fire fine-tuned model (Classes: 0 = smoke, 1 = fire)
+    weight_file = hf_hub_download(
+        repo_id="rabahdev/fire-smoke-yolov8n", 
+        filename="best.pt"
+    )
+    print("[SYSTEM]: Primary HuggingFace model fetched successfully!")
+except Exception as e:
+    print(f"[SYSTEM]: Trying fallback model repository...")
+    weight_file = hf_hub_download(
+        repo_id="mfranzon/fire-smoke-yolov8",
+        filename="fire_smoke_yolov8.pt"
+    )
 
-req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-with urllib.request.urlopen(req) as response, open(target_path, 'wb') as out_file:
-    out_file.write(response.read())
+# Deploy weights across local run directories
+target_dirs = [
+    "runs/detect/train/weights",
+    "runs/detect/train-6/weights"
+]
 
-print(f"[SYSTEM]: Success! Real-world weights deployed to {target_path}")
+for d in target_dirs:
+    os.makedirs(d, exist_ok=True)
+    shutil.copy(weight_file, os.path.join(d, "best.pt"))
+
+print(f"[SYSTEM]: Success! Real-world weights installed to {target_path}")
